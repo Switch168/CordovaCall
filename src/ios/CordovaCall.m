@@ -10,6 +10,7 @@ NSMutableDictionary *callbackIds;
 NSDictionary* pendingCallFromRecents;
 BOOL monitorAudioRouteChange = NO;
 BOOL enableDTMF = NO;
+NSString* lastCallId;
 
 @interface CordovaCall : CDVPlugin <CXProviderDelegate>
     @property (nonatomic, strong) CXProvider *provider;
@@ -177,6 +178,7 @@ BOOL enableDTMF = NO;
     CDVPluginResult* pluginResult = nil;
     NSString* callName = [command.arguments objectAtIndex:0];
     NSString* callId = hasId?[command.arguments objectAtIndex:1]:callName;
+    lastCallId = callId;
     NSUUID *callUUID = [[NSUUID alloc] init];
 
     if (hasId) {
@@ -187,7 +189,6 @@ BOOL enableDTMF = NO;
     if (callName != nil && [callName length] > 0) {
         CXHandle *handle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:callId];
         CXCallUpdate *callUpdate = [[CXCallUpdate alloc] init];
-        callUpdate.remoteHandle = handle;
         callUpdate.hasVideo = hasVideo;
         callUpdate.localizedCallerName = callName;
         callUpdate.supportsGrouping = NO;
@@ -218,6 +219,7 @@ BOOL enableDTMF = NO;
     BOOL hasId = ![[command.arguments objectAtIndex:1] isEqual:[NSNull null]];
     NSString* callName = [command.arguments objectAtIndex:0];
     NSString* callId = hasId?[command.arguments objectAtIndex:1]:callName;
+    lastCallId = callId;
     NSUUID *callUUID = [[NSUUID alloc] init];
 
     if (hasId) {
@@ -299,6 +301,7 @@ BOOL enableDTMF = NO;
 - (void) receiveCallFromRecents:(NSNotification *) notification
 {
     NSString* callID = notification.object[@"callId"];
+    lastCallId = callId;
     NSString* callName = notification.object[@"callName"];
     NSUUID *callUUID = [[NSUUID alloc] init];
     CXHandle *handle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:callID];
@@ -373,6 +376,15 @@ BOOL enableDTMF = NO;
 - (void)provider:(CXProvider *)provider performEndCallAction:(CXEndCallAction *)action
 {
     NSArray<CXCall *> *calls = self.callController.callObserver.calls;
+    
+    NSString* callId = lastCallId;
+    NSArray<CXCall *> *calls = self.callController.callObserver.calls;
+    
+    if (lastCallId == nil) {
+        callId = @"Unknown caller";
+    }
+    lastCallId = nil;
+
     if([calls count] == 1) {
         if(calls[0].hasConnected) {
             for (id callbackId in callbackIds[@"hangup"]) {
