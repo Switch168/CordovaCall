@@ -378,12 +378,15 @@ NSString* lastCallId;
     NSArray<CXCall *> *calls = self.callController.callObserver.calls;
     
     NSString* callId = lastCallId;
-    NSArray<CXCall *> *calls = self.callController.callObserver.calls;
-    
     if (lastCallId == nil) {
         callId = @"Unknown caller";
     }
     lastCallId = nil;
+
+    CXCallUpdate *update = [[CXCallUpdate alloc] init];
+    update.remoteHandle = [[CXHandle alloc] initWithType: CXHandleTypePhoneNumber value:callId];
+    [provider reportCallWithUUID:calls[0].UUID updated:update];
+
 
     if([calls count] == 1) {
         if(calls[0].hasConnected) {
