@@ -301,7 +301,7 @@ NSString* lastCallId;
 - (void) receiveCallFromRecents:(NSNotification *) notification
 {
     NSString* callID = notification.object[@"callId"];
-    lastCallId = callId;
+    lastCallId = callID;
     NSString* callName = notification.object[@"callName"];
     NSUUID *callUUID = [[NSUUID alloc] init];
     CXHandle *handle = [[CXHandle alloc] initWithType:CXHandleTypePhoneNumber value:callID];
